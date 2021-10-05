@@ -92,13 +92,6 @@ client.on("messageCreate", async (message) => {
 
         const info = await ytdlCore.getInfo(link);
 
-        if (info.videoDetails.lengthSeconds < 30) {
-          message.channel.send(
-            `El vídeo debe durar al menos 30 segundos <@${message.author.id}>`
-          );
-          return;
-        }
-
         let titulo = info.videoDetails.title;
 
         const tituloConFiltro = titulo.replace(/\W/g, "");
