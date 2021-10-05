@@ -1,4 +1,5 @@
 const { Client, Intents } = require("discord.js");
+require("dotenv").config();
 
 const {
   joinVoiceChannel,
@@ -16,8 +17,6 @@ const client = new Client({
     Intents.FLAGS.GUILD_MESSAGES,
   ],
 });
-
-const token = "Njc5ODAzNjc4NTc1ODIwODUy.Xk2qgw.80EKUwbypFUTtVrG5Z2w-JhO-nk";
 
 const Channels = ["827144251384659978", "826950998740303942"];
 
@@ -217,4 +216,4 @@ client.on("messageCreate", async (message, args) => {
   }
 });
 
-client.login(token);
+client.login(process.env.TOKEN);
