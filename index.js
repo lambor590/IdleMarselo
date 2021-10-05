@@ -43,20 +43,6 @@ client.on("ready", async () => {
           adapterCreator: channel.guild.voiceAdapterCreator,
         });
 
-        /*
-        PARA YTDL:
-            highWaterMark: 1024 * 1024 * 64,
-            quality: "highestaudio",
-            filter: "audioonly",
-            fmt: "mp3",
-            encoderArgs: [
-              "-af",
-              //"asetrate=44100*1,bass=g=0",
-              "asetrate=44100*1.00,bass=g=100",
-            ],
-          }),
-        */
-
         const resource = createAudioResource(
           "https://streams.ilovemusic.de/iloveradio109.mp3",
           {
@@ -68,9 +54,6 @@ client.on("ready", async () => {
         VoiceConnection.subscribe(player);
         player.play(resource);
         player.on("idle", () => {
-          try {
-            player.play(resource);
-          } catch (e) {}
 
           try {
             player.play(resource);
@@ -82,19 +65,7 @@ client.on("ready", async () => {
   }
 });
 
-client.on("voiceStateUpdate", async (oldState, newState) => {
-  if (
-    newState.channelId &&
-    newState.channel.type === "GUILD_STAGE_VOICE" &&
-    newState.guild.me.voice.suppress
-  ) {
-    try {
-      await newState.guild.me.voice.setSuppressed(false);
-    } catch (e) {}
-  }
-});
-
-client.on("messageCreate", async (message, args) => {
+client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
   if (message.content.toLowerCase().startsWith("!audio")) {
@@ -104,6 +75,14 @@ client.on("messageCreate", async (message, args) => {
 
     const temp = "./temp/";
     const carpeta = "./audios/";
+
+    if (!fs.existsSync(temp)) {
+      fs.mkdirSync(temp);
+    }
+
+    if (!fs.existsSync(carpeta)) {
+      fs.mkdirSync(carpeta);
+    }
 
     const linkValido = ytdlCore.validateURL(link);
 
