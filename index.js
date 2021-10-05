@@ -54,7 +54,6 @@ client.on("ready", async () => {
         VoiceConnection.subscribe(player);
         player.play(resource);
         player.on("idle", () => {
-
           try {
             player.play(resource);
           } catch (e) {}
@@ -94,7 +93,9 @@ client.on("messageCreate", async (message) => {
         const info = await ytdlCore.getInfo(link);
 
         if (info.videoDetails.lengthSeconds < 30) {
-          message.channel.send(`El vídeo debe durar al menos 30 segundos <@${message.author.id}>`);
+          message.channel.send(
+            `El vídeo debe durar al menos 30 segundos <@${message.author.id}>`
+          );
           return;
         }
 
@@ -107,26 +108,20 @@ client.on("messageCreate", async (message) => {
 
         function carpetaVacia() {
           const files = fs.readdirSync(temp);
-          if (files.length === 0) {
-            return true;
-          }
-        }
-
-        function borrarTemp() {
-          if (!carpetaVacia(temp)) {
+          if (!files.length === 0) {
             fs.rmSync(temp, { recursive: true, force: true });
             fs.mkdirSync(temp);
           } else {
             return;
           }
         }
-        borrarTemp();
+        carpetaVacia();
 
         const msg = await message.channel.send(
           `:white_check_mark: Descargando **${titulo}**... | Pedido por ${message.author.tag}`
         );
 
-        function descargar() {
+        async function descargar() {
           ytdlCore(link, {
             filter: "audioonly",
             quality: "highestaudio",
@@ -134,7 +129,7 @@ client.on("messageCreate", async (message) => {
           }).pipe(fs.createWriteStream(carpetaTemp));
         }
 
-        descargar();
+        await descargar();
 
         await espera(1000);
 
@@ -155,15 +150,15 @@ client.on("messageCreate", async (message) => {
 
         async function enviarAudio() {
           if (fs.existsSync(carpetaTemp)) {
-            if (fs.statSync(carpetaTemp).size < 400000) {
+            if (fs.statSync(carpetaTemp).size < 450000 && info.videoDetails.lengthSeconds > 60) {
               await msg.edit(
                 `:x: Hubo un error con el archivo de audio de **${titulo}**.\nReintentado la descarga...`
               );
-              await espera(2000);
+              await espera(1500);
               await msg.delete();
               await empezar();
             } else {
-              fs.copyFileSync(carpetaTemp, archivoFinal);
+              fs.renameSync(carpetaTemp, archivoFinal);
               await msg
                 .edit({
                   content: `:white_check_mark: Se ha completado la subida de **${titulo}**\n:arrow_down: Aquí tienes tu archivo de audio ${message.author.tag} :arrow_down:`,
