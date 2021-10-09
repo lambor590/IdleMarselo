@@ -143,7 +143,16 @@ client.on("messageCreate", async (message) => {
 
         async function enviarAudio() {
           if (fs.existsSync(carpetaTemp)) {
-            if (fs.statSync(carpetaTemp).size < 450000 && info.videoDetails.lengthSeconds > 60) {
+            if (fs.statSync(carpetaTemp).size > 8000000) {
+              await msg.edit(
+                `El archivo pesa más de 8 megabytes, con lo cual no puedo subirlo al chat.`
+              );
+              return;
+            }
+            if (
+              fs.statSync(carpetaTemp).size < 1000000 &&
+              info.videoDetails.lengthSeconds > 60
+            ) {
               await msg.edit(
                 `:x: Hubo un error con el archivo de audio de **${titulo}**.\nReintentado la descarga...`
               );
