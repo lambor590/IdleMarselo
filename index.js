@@ -114,32 +114,60 @@ client.on("messageCreate", async (message) => {
           `:white_check_mark: Descargando **${titulo}**... | Pedido por ${message.author.tag}`
         );
 
-        async function descargar() {
-          ytdlCore(link, {
-            filter: "audioonly",
-            quality: "highestaudio",
-            format: "opus",
-          }).pipe(fs.createWriteStream(carpetaTemp));
-        }
-
         await descargar();
 
-        await espera(1000);
+        async function descargar() {
+          new Promise(async (resolve) => {
+            ytdlCore(link, {
+              filter: "audioonly",
+              quality: "highestaudio",
+              format: "opus",
+            })
+              .pipe(fs.createWriteStream(carpetaTemp))
+              .on("finish", async () => {
+                clearInterval(intervaloMensaje);
+                resolve();
+              });
 
-        await msg
-          .edit(
-            `:arrow_up: Subiendo el archivo de audio de **${titulo}** al chat... | Pedido por ${message.author.tag}`
-          )
-          .catch(async (e) => {
-            await msg.edit(
-              `:x: Ha sucedido un error al subir **${titulo}** al chat. Simplemente vuelve a intentarlo. (es bastante poco probable que suceda este error)`
-            );
-            console.log(e);
+            await espera(1000);
+
+            const duracion = info.videoDetails.lengthSeconds;
+            const segundos = duracion % 60;
+            const minutos = (duracion - segundos) / 60;
+            const tiempo = `${minutos} minutos y ${segundos} segundos`;
+
+            const emojis = ["⬇⌛⌛", "⌛⬇⌛", "⌛⌛⬇"];
+            const puntos = [".", "..", "..."];
+            const descargando = ["Descargando", "**Descargando**"];
+
+            const intervaloMensaje = setInterval(() => {
+              msg.edit(
+                `⬇ ${descargando[descargando.length - 1]} **${titulo}**${
+                  puntos[puntos.length - 1]
+                }\n👤 Pedido por ${
+                  message.author.tag
+                }\n:clock1: El vídeo dura ${tiempo}\n${
+                  emojis[emojis.length - 1]
+                } KyloBytes descargados: ${Math.floor(
+                  (fs.statSync(carpetaTemp).size / 1024) * 100
+                )} ${emojis[emojis.length - 1]}`
+              );
+              emojis.push(emojis.shift());
+              puntos.push(puntos.shift());
+              descargando.push(descargando.shift());
+            }, 2000);
+          }).then(async () => {
+            await msg
+              .edit(`:arrow_up: Subiendo audio al chat...`)
+              .catch(async (e) => {
+                await msg.edit(
+                  `:x: Ha sucedido un error al subir **${titulo}** al chat. Simplemente vuelve a intentarlo. (es bastante poco probable que suceda este error)`
+                );
+                console.log(e);
+              });
+            await enviarAudio();
           });
-
-        await espera(3000);
-
-        await enviarAudio();
+        }
 
         async function enviarAudio() {
           if (fs.existsSync(carpetaTemp)) {
