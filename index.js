@@ -148,7 +148,7 @@ client.on("messageCreate", async (message) => {
                   message.author.tag
                 }\n:clock1: El vídeo dura ${tiempo}\n${
                   emojis[emojis.length - 1]
-                } KyloBytes descargados: ${Math.floor(
+                } KiloBytes descargados: ${Math.floor(
                   (fs.statSync(carpetaTemp).size / 1024) * 100
                 )} ${emojis[emojis.length - 1]}`
               );
