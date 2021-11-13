@@ -25,7 +25,7 @@ client.on("ready", async () => {
 
   client.user.setPresence({
     activities: [{ name: "!audio <link>", type: "WATCHING" }],
-    status: "dnd",
+    status: "online",
   });
 
   for (const IDdelCanal of Canales) {
@@ -44,7 +44,12 @@ client.on("ready", async () => {
         });
 
         const audioDeRadio = createAudioResource(
-          "https://streams.ilovemusic.de/iloveradio109.mp3",
+          ytdlCore("https://www.youtube.com/watch?v=KDX1qqJ0oN0", {
+            filter: "audioonly",
+            o: "-",
+            f: "bestaudio[ext=webm+acodec=opus+asr=48000]/bestaudio",
+            r: "100K",
+          }),
           {
             inlineVolume: true,
           }
@@ -59,6 +64,10 @@ client.on("ready", async () => {
           } catch (e) {}
           unirseAlCanal(channel.id);
         });
+        reproductor.on("error", (e) =>{
+          console.log(e)
+          reproductor.play(audioDeRadio);
+        })
       })
       .catch(console.error);
   }
@@ -116,7 +125,7 @@ client.on("messageCreate", async (message) => {
 
         let embed = new MessageEmbed()
           .setTitle("<a:bien:888522953048862770>  Descargando...")
-          .setColor("#00ff00")
+          .setColor("#2f3136")
           .setDescription(`[${titulo}](${link})`)
           .setImage(info.videoDetails.thumbnails[3].url)
           .setFooter(
@@ -183,7 +192,7 @@ client.on("messageCreate", async (message) => {
 
                   embed
                     .setTitle("<a:bien:888522953048862770>  Descargando...")
-                    .setColor("#00ff00")
+                    .setColor("#2f3136")
                     .setDescription(`[${titulo}](${link})`)
                     .setImage(info.videoDetails.thumbnails[3].url)
                     .setFooter(
@@ -261,8 +270,9 @@ client.on("messageCreate", async (message) => {
               fs.renameSync(carpetaTemp, archivoFinal);
               embed
                 .setTitle("<a:bien:888522953048862770>  Proceso completado")
-                .setColor("#00ff00")
-                .setImage(info.videoDetails.thumbnails[1].url)
+                .setColor("#2f3136")
+                .setImage()
+                .setThumbnail(info.videoDetails.thumbnails[3].url)
                 .setDescription(
                   `Se ha subido al chat:\n**[${titulo}](${link})**`
                 )
