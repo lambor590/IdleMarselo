@@ -44,12 +44,7 @@ client.on("ready", async () => {
         });
 
         const audioDeRadio = createAudioResource(
-          ytdlCore("https://www.youtube.com/watch?v=KDX1qqJ0oN0", {
-            filter: "audioonly",
-            o: "-",
-            f: "bestaudio[ext=webm+acodec=opus+asr=48000]/bestaudio",
-            r: "100K",
-          }),
+          "https://streams.ilovemusic.de/iloveradio109.mp3",
           {
             inlineVolume: true,
           }
@@ -64,10 +59,10 @@ client.on("ready", async () => {
           } catch (e) {}
           unirseAlCanal(channel.id);
         });
-        reproductor.on("error", (e) =>{
-          console.log(e)
+        reproductor.on("error", (e) => {
+          console.log(e);
           reproductor.play(audioDeRadio);
-        })
+        });
       })
       .catch(console.error);
   }
