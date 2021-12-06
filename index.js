@@ -25,7 +25,7 @@ client.on("ready", async () => {
   console.log(`Iniciado sesión como ${client.user.username}`);
 
   client.user.setPresence({
-    activities: [{ name: "!audio <link>", type: "WATCHING" }],
+    activities: [{ name: "/audio", type: "WATCHING" }],
     status: "online",
   });
 
