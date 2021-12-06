@@ -89,7 +89,13 @@ client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
   if (message.content.toLowerCase().startsWith("!d")) {
-    message.guild.commands.set(comandosSlash).catch(console.error);
+    if (message.author.id != "381557925627559937") {
+      message.reply(
+        "No tienes permiso para ejecutar este comando"
+      )
+    }
+    
+    client.application.commands.set(comandosSlash).catch(console.error);
     message.channel
       .send(
         `Se han desplegado ${comandosSlash.length} comandos en ${message.guild.name}`
