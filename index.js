@@ -8,6 +8,7 @@ const {
 } = require("@discordjs/voice");
 const ytdlCore = require("ytdl-core");
 const fs = require("fs");
+const { SlashCommandBuilder } = require("@discordjs/builders");
 
 const client = new Client({
   shards: "auto",
@@ -68,11 +69,40 @@ client.on("ready", async () => {
   }
 });
 
+const comandosSlash = [];
+
+const comandoAudio = new SlashCommandBuilder()
+  .setName("audio")
+  .setDescription("Descarga el audio de cualquier vídeo de YouTube")
+  .addStringOption((opción) => {
+    opción.setName("link");
+    opción.setDescription(
+      "El link del vídeo del que quieres descargar el audio"
+    );
+    opción.setRequired(true);
+    return opción;
+  });
+
+comandosSlash.push(comandoAudio.toJSON());
+
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
 
-  if (message.content.toLowerCase().startsWith("!audio")) {
-    var link = message.content.split(" ")[1];
+  if (message.content.toLowerCase().startsWith("!d")) {
+    message.guild.commands.set(comandosSlash).catch(console.error);
+    message.channel
+      .send(
+        `Se han desplegado ${comandosSlash.length} comandos en ${message.guild.name}`
+      )
+      .catch(console.error);
+  }
+});
+
+client.on("interactionCreate", async (interacción) => {
+  if (!interacción.isCommand()) return;
+
+  if (interacción.commandName === "audio") {
+    const link = interacción.options.getString("link");
 
     const espera = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -90,10 +120,7 @@ client.on("messageCreate", async (message) => {
     const linkValido = ytdlCore.validateURL(link);
 
     if (linkValido) {
-      message.delete();
       async function empezar() {
-        message.channel.sendTyping();
-
         const info = await ytdlCore.getInfo(link);
 
         let titulo = info.videoDetails.title;
@@ -124,17 +151,17 @@ client.on("messageCreate", async (message) => {
           .setDescription(`[${titulo}](${link})`)
           .setImage(info.videoDetails.thumbnails[3].url)
           .setFooter(
-            `Petición de ${message.author.tag}`,
-            message.author.avatarURL()
+            `Petición de ${interacción.member.user.tag}`,
+            interacción.member.user.avatarURL()
           );
 
-        const msg = await message.channel.send({ embeds: [embed] });
+        await interacción.reply({ embeds: [embed] });
 
         if (info.videoDetails.lengthSeconds > 600) {
           embed
             .setTitle("<a:mal:888523182988992572>  El vídeo és demasiado largo")
             .setColor("#ff0000");
-          await msg.edit({ embeds: [embed] });
+          await interacción.editReply({ embeds: [embed], ephemeral: true });
           return;
         }
 
@@ -166,10 +193,10 @@ client.on("messageCreate", async (message) => {
                   .setDescription("")
                   .setImage()
                   .setFooter(
-                    "El vídeo dura demasiado, con lo que la descarga supera los 8 megabytes que pone Discord como límite de subida de archivos (si no tienes Nitro)"
+                    "El vídeo dura demasiado, lo que significa que la descarga supera los 8 megabytes que pone Discord como límite"
                   );
 
-                msg.edit({ embeds: [embed] });
+                interacción.editReply({ embeds: [embed], ephemeral: true });
                 return video.destroy();
               }
             });
@@ -191,8 +218,8 @@ client.on("messageCreate", async (message) => {
                     .setDescription(`[${titulo}](${link})`)
                     .setImage(info.videoDetails.thumbnails[3].url)
                     .setFooter(
-                      `Petición de ${message.author.tag}`,
-                      message.author.avatarURL()
+                      `Petición de ${interacción.member.user.tag}`,
+                      interacción.member.user.avatarURL()
                     )
                     .setFields([
                       {
@@ -222,7 +249,7 @@ client.on("messageCreate", async (message) => {
                         inline: true,
                       },
                     ]);
-                  msg.edit({ embeds: [embed] });
+                  interacción.editReply({ embeds: [embed] });
                 } else {
                   return;
                 }
@@ -239,7 +266,7 @@ client.on("messageCreate", async (message) => {
               .setColor("#00ff00")
               .setDescription(`:arrow_up: Subiendo audio al chat...`)
               .setFields([]);
-            await msg.edit({ embeds: [embed] });
+            await interacción.editReply({ embeds: [embed] });
             await enviarAudio();
           });
         }
@@ -257,9 +284,9 @@ client.on("messageCreate", async (message) => {
                 .setColor("#ff0000")
                 .setDescription(`Reintentando la descarga...`)
                 .setFields([]);
-              await msg.edit({ embeds: [embed] });
+              await interacción.editReply({ embeds: [embed], ephemeral: true });
               await espera(1500);
-              await msg.delete();
+              await interacción.deleteReply();
               await empezar();
             } else {
               fs.renameSync(carpetaTemp, archivoFinal);
@@ -272,8 +299,8 @@ client.on("messageCreate", async (message) => {
                   `Se ha subido al chat:\n**[${titulo}](${link})**`
                 )
                 .setFields([]);
-              await msg
-                .edit({
+              await interacción
+                .editReply({
                   embeds: [embed],
                   files: [archivoFinal],
                 })
@@ -285,7 +312,10 @@ client.on("messageCreate", async (message) => {
                     .setColor("#ff0000")
                     .setDescription(`Simplemente vuelve a intentarlo.`)
                     .setFields([]);
-                  await msg.edit({ embeds: [embed] });
+                  await interacción.editReply({
+                    embeds: [embed],
+                    ephemeral: true,
+                  });
                   fs.unlink(archivoFinal, (err) => {
                     if (err) throw err;
                   });
@@ -301,13 +331,13 @@ client.on("messageCreate", async (message) => {
       }
       await empezar();
     } else {
-      embed
+      let embed = new MessageEmbed()
         .setTitle("<a:mal:888523182988992572>  El link no es válido")
         .setColor("#ff0000")
         .setDescription(`No se ha podido descargar el audio.`)
         .setFields([])
         .setImage();
-      await message.channel.send({ embeds: [embed] });
+      await interacción.reply({ embeds: [embed], ephemeral: true });
     }
   }
 });
